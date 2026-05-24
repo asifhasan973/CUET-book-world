@@ -6,7 +6,7 @@ A role-based digital library management system designed exclusively for Chittago
 
 ## 🔗 Live Sites
 * **Frontend client:** [https://client-asifhasan973s-projects.vercel.app](https://client-asifhasan973s-projects.vercel.app) (Alternative: [https://client-mu-five-98.vercel.app](https://client-mu-five-98.vercel.app))
-* **Backend API server:** [https://server-jrrfj95ua-asifhasan973s-projects.vercel.app/api](https://server-jrrfj95ua-asifhasan973s-projects.vercel.app/api)
+* **Backend API server:** [https://cuet-book-world-server.vercel.app/api](https://cuet-book-world-server.vercel.app/api)
 
 ---
 
