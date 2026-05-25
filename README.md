@@ -50,11 +50,34 @@ The following demo accounts are pre-configured for testing all three roles:
 
 ---
 
-## 📸 Screenshots
+## 📸 Screenshots & UI Tour
 
-*(Placeholder for screenshots / GIF walk-throughs)*
-![Homepage Desktop Preview](https://placehold.co/800x450/6366f1/ffffff?text=Homepage+Desktop+Preview)
-![Dashboard Preview](https://placehold.co/800x450/8b5cf6/ffffff?text=Librarian+Dashboard+Preview)
+### 🏠 Home & Catalog
+| Landing Page (Light Mode) | Landing Page (Dark Mode) |
+|:---:|:---:|
+| ![Home](Preview%20Images/Home.png) | ![Home Dark](Preview%20Images/Home-page-dark-mode.png) |
+
+| Book Catalog & Filters | Book Details & Reviews |
+|:---:|:---:|
+| ![Booklist](Preview%20Images/Booklist.png) | ![Book Details](Preview%20Images/Book-details.png) |
+
+### 📖 Reading & Renewal Process
+| PDF E-Book Viewer | Book Renewal Request |
+|:---:|:---:|
+| ![PDF Viewer](Preview%20Images/PDF-read-from-website.png) | ![Book Renew](Preview%20Images/Book%20renew.png) |
+
+| Video Consultation Call | Notifications Center |
+|:---:|:---:|
+| ![Video Call](Preview%20Images/Join-video-call.png) | ![Notifications](Preview%20Images/Notifications.png) |
+
+### 📊 Dashboards & Role Panels
+| Student Dashboard | Librarian Control Panel |
+|:---:|:---:|
+| ![Student Dashboard](Preview%20Images/User-dashboard.png) | ![Librarian Dashboard](Preview%20Images/Librarian%20Dashboard.png) |
+
+| Admin Dashboard | User Accounts Management |
+|:---:|:---:|
+| ![Admin Dashboard](Preview%20Images/Admin-dashboard.png) | ![User Management](Preview%20Images/user%20management%20by%20admin.png) |
 
 ---
 
