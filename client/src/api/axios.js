@@ -5,11 +5,16 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
 });
 
-// Attach Firebase UID to every request
+// Attach Firebase ID Token (JWT) to every request dynamically
 API.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {
-    config.headers['x-firebase-uid'] = user.uid;
+    try {
+      const token = await user.getIdToken();
+      config.headers['Authorization'] = `Bearer ${token}`;
+    } catch (error) {
+      console.error('Error fetching Firebase ID token:', error);
+    }
   }
   return config;
 });

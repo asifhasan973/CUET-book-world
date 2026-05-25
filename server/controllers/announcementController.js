@@ -1,7 +1,8 @@
 const Announcement = require('../models/Announcement');
+const { NotFoundError } = require('../utils/errors');
 
 // Get active announcements
-const getAnnouncements = async (req, res) => {
+const getAnnouncements = async (req, res, next) => {
   try {
     const { all, home } = req.query;
 
@@ -17,12 +18,12 @@ const getAnnouncements = async (req, res) => {
     const announcements = await Announcement.find(query).sort({ createdAt: -1 });
     res.json(announcements);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching announcements', error: error.message });
+    next(error);
   }
 };
 
 // Create announcement
-const createAnnouncement = async (req, res) => {
+const createAnnouncement = async (req, res, next) => {
   try {
     const announcement = await Announcement.create({
       ...req.body,
@@ -30,29 +31,29 @@ const createAnnouncement = async (req, res) => {
     });
     res.status(201).json({ message: 'Announcement created', announcement });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating announcement', error: error.message });
+    next(error);
   }
 };
 
 // Update announcement
-const updateAnnouncement = async (req, res) => {
+const updateAnnouncement = async (req, res, next) => {
   try {
     if (req.body?.showOnHome === true) {
       await Announcement.updateMany({ _id: { $ne: req.params.id } }, { showOnHome: false });
     }
     const announcement = await Announcement.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!announcement) return res.status(404).json({ message: 'Announcement not found' });
+    if (!announcement) throw new NotFoundError('Announcement not found');
     res.json({ message: 'Announcement updated', announcement });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating announcement', error: error.message });
+    next(error);
   }
 };
 
 // Set show on home
-const setShowOnHome = async (req, res) => {
+const setShowOnHome = async (req, res, next) => {
   try {
     const announcement = await Announcement.findById(req.params.id);
-    if (!announcement) return res.status(404).json({ message: 'Announcement not found' });
+    if (!announcement) throw new NotFoundError('Announcement not found');
 
     await Announcement.updateMany({}, { showOnHome: false });
     announcement.showOnHome = true;
@@ -61,17 +62,18 @@ const setShowOnHome = async (req, res) => {
 
     res.json({ message: 'Home announcement updated', announcement });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating home announcement', error: error.message });
+    next(error);
   }
 };
 
 // Delete announcement
-const deleteAnnouncement = async (req, res) => {
+const deleteAnnouncement = async (req, res, next) => {
   try {
-    await Announcement.findByIdAndDelete(req.params.id);
+    const announcement = await Announcement.findByIdAndDelete(req.params.id);
+    if (!announcement) throw new NotFoundError('Announcement not found');
     res.json({ message: 'Announcement deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting announcement', error: error.message });
+    next(error);
   }
 };
 

@@ -3,7 +3,7 @@ const User = require('../models/User');
 const BorrowRecord = require('../models/BorrowRecord');
 
 // Get stats
-const getStats = async (req, res) => {
+const getStats = async (req, res, next) => {
   try {
     const totalBooks = await Book.countDocuments({ isEbook: false });
     const totalEbooks = await Book.countDocuments({ isEbook: true });
@@ -70,7 +70,7 @@ const getStats = async (req, res) => {
       borrowsByDept,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching stats', error: error.message });
+    next(error);
   }
 };
 

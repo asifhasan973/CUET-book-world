@@ -2,25 +2,26 @@ const BorrowRecord = require('../models/BorrowRecord');
 const Book = require('../models/Book');
 const Notification = require('../models/Notification');
 const { calculateBorrowFineView, getAutoOverdueFine } = require('../utils/borrowFines');
+const { NotFoundError, BadRequestError } = require('../utils/errors');
 
 const BORROW_REJECTION_FINE = 50;
 
 // Create borrow request
-const createBorrow = async (req, res) => {
+const createBorrow = async (req, res, next) => {
   try {
     const { bookId } = req.body;
     const user = req.user;
 
     const book = await Book.findById(bookId);
-    if (!book) return res.status(404).json({ message: 'Book not found' });
-    if (book.availableCopies <= 0) return res.status(400).json({ message: 'No copies available' });
+    if (!book) throw new NotFoundError('Book not found');
+    if (book.availableCopies <= 0) throw new BadRequestError('No copies available');
 
     const activeCount = await BorrowRecord.countDocuments({
       userId: user._id,
       status: { $in: ['active', 'pending'] },
     });
     if (activeCount >= user.borrowLimit) {
-      return res.status(400).json({ message: `You have reached your borrow limit (${user.borrowLimit})` });
+      throw new BadRequestError(`You have reached your borrow limit (${user.borrowLimit})`);
     }
 
     const existing = await BorrowRecord.findOne({
@@ -28,7 +29,7 @@ const createBorrow = async (req, res) => {
       bookId,
       status: { $in: ['active', 'pending'] },
     });
-    if (existing) return res.status(400).json({ message: 'You already have a pending/active borrow for this book' });
+    if (existing) throw new BadRequestError('You already have a pending/active borrow for this book');
 
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
@@ -42,12 +43,12 @@ const createBorrow = async (req, res) => {
 
     res.status(201).json({ message: 'Borrow request submitted', borrow });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating borrow request', error: error.message });
+    next(error);
   }
 };
 
 // Student's borrows
-const getMyBorrows = async (req, res) => {
+const getMyBorrows = async (req, res, next) => {
   try {
     const borrows = await BorrowRecord.find({ userId: req.user._id })
       .populate('bookId', 'title authors coverImage')
@@ -58,12 +59,12 @@ const getMyBorrows = async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching borrows', error: error.message });
+    next(error);
   }
 };
 
 // All borrows (librarian/admin)
-const getAllBorrows = async (req, res) => {
+const getAllBorrows = async (req, res, next) => {
   try {
     const { status } = req.query;
     const query = {};
@@ -79,19 +80,19 @@ const getAllBorrows = async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching borrows', error: error.message });
+    next(error);
   }
 };
 
 // Approve borrow
-const approveBorrow = async (req, res) => {
+const approveBorrow = async (req, res, next) => {
   try {
     const borrow = await BorrowRecord.findById(req.params.id);
-    if (!borrow) return res.status(404).json({ message: 'Borrow record not found' });
-    if (borrow.status !== 'pending') return res.status(400).json({ message: 'Cannot approve this borrow' });
+    if (!borrow) throw new NotFoundError('Borrow record not found');
+    if (borrow.status !== 'pending') throw new BadRequestError('Cannot approve this borrow');
 
     const book = await Book.findById(borrow.bookId);
-    if (book.availableCopies <= 0) return res.status(400).json({ message: 'No copies available' });
+    if (book.availableCopies <= 0) throw new BadRequestError('No copies available');
 
     borrow.status = 'active';
     borrow.borrowDate = new Date();
@@ -112,16 +113,16 @@ const approveBorrow = async (req, res) => {
 
     res.json({ message: 'Borrow approved', borrow });
   } catch (error) {
-    res.status(500).json({ message: 'Error approving borrow', error: error.message });
+    next(error);
   }
 };
 
 // Reject borrow
-const rejectBorrow = async (req, res) => {
+const rejectBorrow = async (req, res, next) => {
   try {
     const borrow = await BorrowRecord.findById(req.params.id).populate('bookId', 'title');
-    if (!borrow) return res.status(404).json({ message: 'Borrow record not found' });
-    if (borrow.status !== 'pending') return res.status(400).json({ message: 'Only pending borrow requests can be rejected' });
+    if (!borrow) throw new NotFoundError('Borrow record not found');
+    if (borrow.status !== 'pending') throw new BadRequestError('Only pending borrow requests can be rejected');
 
     borrow.status = 'rejected';
     borrow.fine = Math.max(Number(borrow.fine || 0), BORROW_REJECTION_FINE);
@@ -139,15 +140,15 @@ const rejectBorrow = async (req, res) => {
 
     res.json({ message: 'Borrow rejected', borrow });
   } catch (error) {
-    res.status(500).json({ message: 'Error rejecting borrow', error: error.message });
+    next(error);
   }
 };
 
 // Return book
-const returnBook = async (req, res) => {
+const returnBook = async (req, res, next) => {
   try {
     const borrow = await BorrowRecord.findById(req.params.id);
-    if (!borrow) return res.status(404).json({ message: 'Borrow record not found' });
+    if (!borrow) throw new NotFoundError('Borrow record not found');
 
     borrow.status = 'returned';
     borrow.returnDate = new Date();
@@ -168,7 +169,7 @@ const returnBook = async (req, res) => {
 
     res.json({ message: 'Book returned', borrow });
   } catch (error) {
-    res.status(500).json({ message: 'Error returning book', error: error.message });
+    next(error);
   }
 };
 

@@ -107,7 +107,7 @@ Copy `.env.example` files to `.env` in both folders and fill in your Firebase an
   cd ../server
   cp .env.example .env
   ```
-  *(Then open `.env` and add your `MONGODB_URI` connection string)*
+  *(Then open `.env` and add your `MONGODB_URI` and `FIREBASE_PROJECT_ID` connection/credentials)*
 
 ### 3. Install Dependencies & Seed Database
 * **Server Setup:**

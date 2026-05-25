@@ -35,9 +35,7 @@ export const AuthProvider = ({ children }) => {
         ...extraData,
       });
 
-      const res = await API.get('/auth/me', {
-        headers: { 'x-firebase-uid': firebaseUser.uid },
-      });
+      const res = await API.get('/auth/me');
       setDbUser(res.data);
       return res.data;
     } catch (error) {

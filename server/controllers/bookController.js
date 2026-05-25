@@ -1,17 +1,20 @@
 const Book = require('../models/Book');
 const Review = require('../models/Review');
+const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { escapeRegex } = require('../utils/string');
 
 // List books with filters
-const getBooks = async (req, res) => {
+const getBooks = async (req, res, next) => {
   try {
     const { search, department, category, availability, sort, page = 1, limit = 12, ebook } = req.query;
     const query = {};
 
     if (search) {
+      const escapedSearch = escapeRegex(search);
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { authors: { $regex: search, $options: 'i' } },
-        { isbn: { $regex: search, $options: 'i' } },
+        { title: { $regex: escapedSearch, $options: 'i' } },
+        { authors: { $regex: escapedSearch, $options: 'i' } },
+        { isbn: { $regex: escapedSearch, $options: 'i' } },
       ];
     }
 
@@ -54,64 +57,64 @@ const getBooks = async (req, res) => {
       totalPages: Math.ceil(total / parseInt(limit)),
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching books', error: error.message });
+    next(error);
   }
 };
 
 // Single book detail
-const getBookById = async (req, res) => {
+const getBookById = async (req, res, next) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ message: 'Book not found' });
+    if (!book) throw new NotFoundError('Book not found');
 
     const reviews = await Review.find({ bookId: book._id }).sort({ createdAt: -1 }).limit(20);
     res.json({ book, reviews });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching book', error: error.message });
+    next(error);
   }
 };
 
 // Add book
-const createBook = async (req, res) => {
+const createBook = async (req, res, next) => {
   try {
     const book = await Book.create(req.body);
     res.status(201).json({ message: 'Book added', book });
   } catch (error) {
-    res.status(500).json({ message: 'Error adding book', error: error.message });
+    next(error);
   }
 };
 
 // Edit book
-const updateBook = async (req, res) => {
+const updateBook = async (req, res, next) => {
   try {
     const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!book) return res.status(404).json({ message: 'Book not found' });
+    if (!book) throw new NotFoundError('Book not found');
     res.json({ message: 'Book updated', book });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating book', error: error.message });
+    next(error);
   }
 };
 
 // Delete book
-const deleteBook = async (req, res) => {
+const deleteBook = async (req, res, next) => {
   try {
     const book = await Book.findByIdAndDelete(req.params.id);
-    if (!book) return res.status(404).json({ message: 'Book not found' });
+    if (!book) throw new NotFoundError('Book not found');
     res.json({ message: 'Book deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting book', error: error.message });
+    next(error);
   }
 };
 
 // Add review
-const createReview = async (req, res) => {
+const createReview = async (req, res, next) => {
   try {
     const { rating, comment } = req.body;
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ message: 'Book not found' });
+    if (!book) throw new NotFoundError('Book not found');
 
     const existing = await Review.findOne({ bookId: book._id, userId: req.user._id });
-    if (existing) return res.status(400).json({ message: 'You have already reviewed this book' });
+    if (existing) throw new BadRequestError('You have already reviewed this book');
 
     const review = await Review.create({
       bookId: book._id,
@@ -129,7 +132,7 @@ const createReview = async (req, res) => {
 
     res.status(201).json({ message: 'Review added', review });
   } catch (error) {
-    res.status(500).json({ message: 'Error adding review', error: error.message });
+    next(error);
   }
 };
 

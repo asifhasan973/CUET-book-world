@@ -1,17 +1,37 @@
+const admin = require('firebase-admin');
 const User = require('../models/User');
 
-// Simple auth middleware that extracts user from a token-like header
-// Since we don't have Firebase Admin service account, we use a simplified approach:
-// The client sends the Firebase UID and email in the header after client-side Firebase auth
+// Initialize Firebase Admin if not already initialized
+if (admin.apps.length === 0) {
+  admin.initializeApp({
+    projectId: process.env.FIREBASE_PROJECT_ID || 'cuet-book-world'
+  });
+}
+
+// Auth middleware that extracts and verifies Firebase ID Token
 const authMiddleware = async (req, res, next) => {
   try {
-    const firebaseUid = req.headers['x-firebase-uid'];
-    if (!firebaseUid) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const user = await User.findOne({ firebaseUid });
+    const token = authHeader.split(' ')[1];
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(token);
+    } catch (tokenError) {
+      return res.status(401).json({ message: 'Invalid or expired authentication token', error: tokenError.message });
+    }
+
+    req.firebaseUser = decodedToken; // Make token data available to downstream controllers (like sync)
+
+    const user = await User.findOne({ firebaseUid: decodedToken.uid });
     if (!user) {
+      // Allow /sync to proceed without a pre-existing DB user record
+      if (req.path === '/sync') {
+        return next();
+      }
       return res.status(401).json({ message: 'User not found. Please sync your account.' });
     }
 
@@ -36,3 +56,4 @@ const requireRole = (...roles) => {
 };
 
 module.exports = { authMiddleware, requireRole };
+

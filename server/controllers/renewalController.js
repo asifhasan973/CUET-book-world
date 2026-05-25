@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const RenewalRequest = require('../models/RenewalRequest');
 const BorrowRecord = require('../models/BorrowRecord');
 const Notification = require('../models/Notification');
+const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/errors');
 
 // Generate Jitsi Meet link
 const generateMeetingLink = () => {
@@ -10,18 +11,18 @@ const generateMeetingLink = () => {
 };
 
 // Request renewal
-const createRenewal = async (req, res) => {
+const createRenewal = async (req, res, next) => {
   try {
     const { borrowId, preferredDate, preferredTime, notes } = req.body;
 
     const borrow = await BorrowRecord.findById(borrowId);
-    if (!borrow) return res.status(404).json({ message: 'Borrow record not found' });
+    if (!borrow) throw new NotFoundError('Borrow record not found');
     if (borrow.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not your borrow record' });
+      throw new ForbiddenError('Not your borrow record');
     }
 
     const existing = await RenewalRequest.findOne({ borrowId, status: { $in: ['pending', 'approved'] } });
-    if (existing) return res.status(400).json({ message: 'A renewal request is already pending or scheduled' });
+    if (existing) throw new BadRequestError('A renewal request is already pending or scheduled');
 
     const renewal = await RenewalRequest.create({
       userId: req.user._id,
@@ -34,12 +35,12 @@ const createRenewal = async (req, res) => {
 
     res.status(201).json({ message: 'Renewal request submitted! You will be notified when approved.', renewal });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating renewal request', error: error.message });
+    next(error);
   }
 };
 
 // List renewals (librarian/admin)
-const getRenewals = async (req, res) => {
+const getRenewals = async (req, res, next) => {
   try {
     const renewals = await RenewalRequest.find()
       .populate('userId', 'name email studentId department year')
@@ -52,12 +53,12 @@ const getRenewals = async (req, res) => {
 
     res.json(renewals);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching renewals', error: error.message });
+    next(error);
   }
 };
 
 // My renewals (student)
-const getMyRenewals = async (req, res) => {
+const getMyRenewals = async (req, res, next) => {
   try {
     const renewals = await RenewalRequest.find({ userId: req.user._id })
       .populate({
@@ -69,12 +70,12 @@ const getMyRenewals = async (req, res) => {
 
     res.json(renewals);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching renewals', error: error.message });
+    next(error);
   }
 };
 
 // Approve renewal
-const approveRenewal = async (req, res) => {
+const approveRenewal = async (req, res, next) => {
   try {
     const { scheduledDate, scheduledTime } = req.body;
     const renewal = await RenewalRequest.findById(req.params.id)
@@ -82,9 +83,9 @@ const approveRenewal = async (req, res) => {
         path: 'borrowId',
         populate: { path: 'bookId', select: 'title' },
       });
-    if (!renewal) return res.status(404).json({ message: 'Renewal not found' });
+    if (!renewal) throw new NotFoundError('Renewal request not found');
     if (renewal.status !== 'pending') {
-      return res.status(400).json({ message: 'This renewal is not in pending status' });
+      throw new BadRequestError('This renewal is not in pending status');
     }
 
     const meetingLink = generateMeetingLink();
@@ -97,7 +98,8 @@ const approveRenewal = async (req, res) => {
     await renewal.save();
 
     const bookTitle = renewal.borrowId?.bookId?.title || 'your book';
-    const meetDate = new Date(renewal.scheduledDate).toLocaleDateString();
+    const rawDate = new Date(renewal.scheduledDate);
+    const meetDate = isNaN(rawDate.getTime()) ? String(renewal.scheduledDate) : rawDate.toLocaleDateString();
     const meetTime = renewal.scheduledTime;
 
     await Notification.create({
@@ -109,17 +111,17 @@ const approveRenewal = async (req, res) => {
 
     res.json({ message: 'Renewal approved with meeting link', renewal, meetingLink });
   } catch (error) {
-    res.status(500).json({ message: 'Error approving renewal', error: error.message });
+    next(error);
   }
 };
 
 // Complete renewal
-const completeRenewal = async (req, res) => {
+const completeRenewal = async (req, res, next) => {
   try {
     const renewal = await RenewalRequest.findById(req.params.id);
-    if (!renewal) return res.status(404).json({ message: 'Renewal not found' });
+    if (!renewal) throw new NotFoundError('Renewal not found');
     if (renewal.status !== 'approved') {
-      return res.status(400).json({ message: 'Only approved renewals can be completed' });
+      throw new BadRequestError('Only approved renewals can be completed');
     }
 
     renewal.status = 'completed';
@@ -146,12 +148,12 @@ const completeRenewal = async (req, res) => {
 
     res.json({ message: 'Renewal completed, due date extended', renewal });
   } catch (error) {
-    res.status(500).json({ message: 'Error completing renewal', error: error.message });
+    next(error);
   }
 };
 
 // Reject renewal
-const rejectRenewal = async (req, res) => {
+const rejectRenewal = async (req, res, next) => {
   try {
     const { reason } = req.body || {};
     const renewal = await RenewalRequest.findById(req.params.id)
@@ -159,9 +161,9 @@ const rejectRenewal = async (req, res) => {
         path: 'borrowId',
         populate: { path: 'bookId', select: 'title' },
       });
-    if (!renewal) return res.status(404).json({ message: 'Renewal not found' });
+    if (!renewal) throw new NotFoundError('Renewal not found');
     if (!['pending', 'approved'].includes(renewal.status)) {
-      return res.status(400).json({ message: 'Only pending or approved renewals can be rejected' });
+      throw new BadRequestError('Only pending or approved renewals can be rejected');
     }
 
     renewal.status = 'rejected';
@@ -180,7 +182,7 @@ const rejectRenewal = async (req, res) => {
 
     res.json({ message: 'Renewal rejected', renewal });
   } catch (error) {
-    res.status(500).json({ message: 'Error rejecting renewal', error: error.message });
+    next(error);
   }
 };
 

@@ -3,18 +3,21 @@ const BorrowRecord = require('../models/BorrowRecord');
 const Book = require('../models/Book');
 const Notification = require('../models/Notification');
 const { calculateBorrowFineView } = require('../utils/borrowFines');
+const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { escapeRegex } = require('../utils/string');
 
 // Get all users (admin)
-const getUsers = async (req, res) => {
+const getUsers = async (req, res, next) => {
   try {
     const { search, role, status, department } = req.query;
     const query = {};
 
     if (search) {
+      const escapedSearch = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { studentId: { $regex: search, $options: 'i' } },
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { email: { $regex: escapedSearch, $options: 'i' } },
+        { studentId: { $regex: escapedSearch, $options: 'i' } },
       ];
     }
     if (role && role !== 'all') query.role = role;
@@ -24,20 +27,21 @@ const getUsers = async (req, res) => {
     const users = await User.find(query).sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching users', error: error.message });
+    next(error);
   }
 };
 
 // Get all students (librarian/admin)
-const getStudents = async (req, res) => {
+const getStudents = async (req, res, next) => {
   try {
     const { search } = req.query;
     const query = { role: 'student' };
 
     if (search) {
+      const escapedSearch = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { studentId: { $regex: search, $options: 'i' } },
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { studentId: { $regex: escapedSearch, $options: 'i' } },
       ];
     }
 
@@ -53,12 +57,12 @@ const getStudents = async (req, res) => {
       fineBalance: fineByUser.get(student._id.toString()) || 0,
     })));
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching students', error: error.message });
+    next(error);
   }
 };
 
 // Get student's borrows (librarian/admin)
-const getStudentBorrows = async (req, res) => {
+const getStudentBorrows = async (req, res, next) => {
   try {
     const borrows = await BorrowRecord.find({ userId: req.params.id })
       .populate('bookId', 'title authors')
@@ -66,23 +70,23 @@ const getStudentBorrows = async (req, res) => {
     const now = new Date();
     res.json(borrows.map(borrow => calculateBorrowFineView(borrow, now)));
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching student borrows', error: error.message });
+    next(error);
   }
 };
 
 // Set a borrow fine (librarian/admin)
-const setStudentBorrowFine = async (req, res) => {
+const setStudentBorrowFine = async (req, res, next) => {
   try {
     const fine = Number(req.body?.fine);
     const reason = String(req.body?.reason || 'Fine updated by librarian').trim();
 
     if (!Number.isFinite(fine) || fine < 0) {
-      return res.status(400).json({ message: 'Fine must be a non-negative number' });
+      throw new BadRequestError('Fine must be a non-negative number');
     }
 
     const borrow = await BorrowRecord.findOne({ _id: req.params.borrowId, userId: req.params.userId })
       .populate('bookId', 'title');
-    if (!borrow) return res.status(404).json({ message: 'Borrow record not found' });
+    if (!borrow) throw new NotFoundError('Borrow record not found');
 
     borrow.fine = Math.round(fine);
     borrow.fineOverride = true;
@@ -100,15 +104,15 @@ const setStudentBorrowFine = async (req, res) => {
 
     res.json({ message: 'Fine updated', borrow: calculateBorrowFineView(borrow) });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating fine', error: error.message });
+    next(error);
   }
 };
 
 // Remove a borrow record (admin only)
-const deleteStudentBorrowRecord = async (req, res) => {
+const deleteStudentBorrowRecord = async (req, res, next) => {
   try {
     const borrow = await BorrowRecord.findOne({ _id: req.params.borrowId, userId: req.params.userId });
-    if (!borrow) return res.status(404).json({ message: 'Borrow record not found' });
+    if (!borrow) throw new NotFoundError('Borrow record not found');
 
     if (['active', 'pending', 'overdue'].includes(borrow.status)) {
       const book = await Book.findById(borrow.bookId);
@@ -129,20 +133,20 @@ const deleteStudentBorrowRecord = async (req, res) => {
 
     res.json({ message: 'Borrow record deleted and book availability restored' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting borrow record', error: error.message });
+    next(error);
   }
 };
 
 // Change user role (admin only)
-const changeUserRole = async (req, res) => {
+const changeUserRole = async (req, res, next) => {
   try {
     const { role } = req.body;
     if (!['student', 'librarian', 'admin'].includes(role)) {
-      return res.status(400).json({ message: 'Invalid role' });
+      throw new BadRequestError('Invalid role');
     }
 
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) throw new NotFoundError('User not found');
 
     await Notification.create({
       userId: user._id,
@@ -153,35 +157,35 @@ const changeUserRole = async (req, res) => {
 
     res.json({ message: 'Role updated', user });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating role', error: error.message });
+    next(error);
   }
 };
 
 // Change user status (admin only)
-const changeUserStatus = async (req, res) => {
+const changeUserStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
     if (!['active', 'pending', 'suspended'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+      throw new BadRequestError('Invalid status');
     }
 
     const user = await User.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) throw new NotFoundError('User not found');
 
     res.json({ message: 'Status updated', user });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating status', error: error.message });
+    next(error);
   }
 };
 
 // Delete user (admin only)
-const deleteUser = async (req, res) => {
+const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) throw new NotFoundError('User not found');
     res.json({ message: 'User deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting user', error: error.message });
+    next(error);
   }
 };
 

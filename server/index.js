@@ -47,6 +47,10 @@ app.use('/api/videos', require('./routes/videos'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/stats', require('./routes/stats'));
 
+// Centralized error handler middleware (must be registered last)
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);
+
 // Start server only in non-serverless environments
 if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
   app.listen(PORT, () => {

@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { BadRequestError, ForbiddenError, NotFoundError } = require('../utils/errors');
 
 const ALLOWED_EMAIL_DOMAINS = new Set(['cuet.ac.bd', 'student.cuet.ac.bd']);
 
@@ -14,19 +15,19 @@ const isAllowedCuetEmail = (email = '') => {
 };
 
 // Sync Firebase user to MongoDB
-const syncUser = async (req, res) => {
+const syncUser = async (req, res, next) => {
   try {
-    const { firebaseUid, name, email, studentId, department, year, avatar, requestedRole } = req.body;
+    const firebaseUid = req.firebaseUser.uid;
+    const email = req.firebaseUser.email;
+    const { name, studentId, department, year, avatar, requestedRole } = req.body;
 
     if (!firebaseUid || !email) {
-      return res.status(400).json({ message: 'firebaseUid and email are required' });
+      throw new BadRequestError('firebaseUid and email are required');
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     if (!isAllowedCuetEmail(normalizedEmail)) {
-      return res.status(403).json({
-        message: 'Use a CUET email ending in @cuet.ac.bd or @student.cuet.ac.bd.',
-      });
+      throw new ForbiddenError('Use a CUET email ending in @cuet.ac.bd or @student.cuet.ac.bd.');
     }
 
     let user = await User.findOne({ firebaseUid });
@@ -68,56 +69,40 @@ const syncUser = async (req, res) => {
 
     res.json({ message: 'User synced successfully', user });
   } catch (error) {
-    console.error('Auth sync error:', error);
-    res.status(500).json({ message: 'Error syncing user', error: error.message });
+    next(error);
   }
 };
 
 // Get current user profile
-const getCurrentUser = async (req, res) => {
+const getCurrentUser = async (req, res, next) => {
   try {
-    const firebaseUid = req.headers['x-firebase-uid'];
-    if (!firebaseUid) {
-      return res.status(401).json({ message: 'No firebase UID provided' });
-    }
-
-    const user = await User.findOne({ firebaseUid });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json(user);
+    res.json(req.user);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching user', error: error.message });
+    next(error);
   }
 };
 
 // Update user profile
-const updateProfile = async (req, res) => {
+const updateProfile = async (req, res, next) => {
   try {
-    const firebaseUid = req.headers['x-firebase-uid'];
-    if (!firebaseUid) {
-      return res.status(401).json({ message: 'No firebase UID provided' });
-    }
-
     const updates = req.body;
     delete updates.role;
     delete updates.status;
     delete updates.firebaseUid;
 
-    const user = await User.findOneAndUpdate(
-      { firebaseUid },
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
       { $set: updates },
       { new: true }
     );
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      throw new NotFoundError('User not found');
     }
 
     res.json({ message: 'Profile updated', user });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating profile', error: error.message });
+    next(error);
   }
 };
 
@@ -126,3 +111,4 @@ module.exports = {
   getCurrentUser,
   updateProfile
 };
+
