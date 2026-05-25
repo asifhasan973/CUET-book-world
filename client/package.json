@@ -1,7 +1,15 @@
 {
-  "name": "client",
+  "name": "cuet-bookworld-client",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "React frontend for CUET Bookworld — a role-based digital library portal with dark mode, e-book reader, and video consultation integration.",
+  "author": "Asif Hasan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asifhasan973/CUET-book-world.git",
+    "directory": "client"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

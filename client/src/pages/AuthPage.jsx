@@ -370,16 +370,6 @@ const AuthPage = () => {
                 </div>
               </div>
 
-              {/* Remember me */}
-              {isLogin && (
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                    <span className="text-slate-600 dark:text-slate-400">Remember me</span>
-                  </label>
-                  <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Forgot password?</a>
-                </div>
-              )}
 
               {/* Submit button */}
               <button

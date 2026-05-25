@@ -17,6 +17,11 @@ const Footer = () => {
           <Link to="/contact">Contact</Link>
         </nav>
       </div>
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+          © {new Date().getFullYear()} CUET Bookworld. Built for Chittagong University of Engineering & Technology.
+        </p>
+      </div>
     </footer>
   );
 };

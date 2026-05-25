@@ -3,6 +3,13 @@ const Review = require('../models/Review');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
 const { escapeRegex } = require('../utils/string');
 
+// Allowed fields for book creation/update (prevents injection of rating, reviewCount, etc.)
+const BOOK_MUTABLE_FIELDS = [
+  'title', 'authors', 'publisher', 'year', 'isbn', 'edition',
+  'subject', 'department', 'yearLevel', 'totalCopies', 'availableCopies',
+  'description', 'coverImage', 'ebookLink', 'isEbook',
+];
+
 // List books with filters
 const getBooks = async (req, res, next) => {
   try {
@@ -77,7 +84,11 @@ const getBookById = async (req, res, next) => {
 // Add book
 const createBook = async (req, res, next) => {
   try {
-    const book = await Book.create(req.body);
+    const data = {};
+    for (const field of BOOK_MUTABLE_FIELDS) {
+      if (req.body[field] !== undefined) data[field] = req.body[field];
+    }
+    const book = await Book.create(data);
     res.status(201).json({ message: 'Book added', book });
   } catch (error) {
     next(error);
@@ -87,7 +98,11 @@ const createBook = async (req, res, next) => {
 // Edit book
 const updateBook = async (req, res, next) => {
   try {
-    const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const data = {};
+    for (const field of BOOK_MUTABLE_FIELDS) {
+      if (req.body[field] !== undefined) data[field] = req.body[field];
+    }
+    const book = await Book.findByIdAndUpdate(req.params.id, data, { new: true });
     if (!book) throw new NotFoundError('Book not found');
     res.json({ message: 'Book updated', book });
   } catch (error) {

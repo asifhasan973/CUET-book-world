@@ -83,12 +83,17 @@ const getCurrentUser = async (req, res, next) => {
 };
 
 // Update user profile
+const UPDATABLE_PROFILE_FIELDS = ['name', 'studentId', 'department', 'year', 'avatar', 'notificationsEnabled', 'theme'];
+
 const updateProfile = async (req, res, next) => {
   try {
-    const updates = req.body;
-    delete updates.role;
-    delete updates.status;
-    delete updates.firebaseUid;
+    // Only allow whitelisted fields to prevent injection of role/status/borrowLimit
+    const updates = {};
+    for (const field of UPDATABLE_PROFILE_FIELDS) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user._id,

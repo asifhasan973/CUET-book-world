@@ -9,10 +9,9 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
-  'https://client-asifhasan973s-projects.vercel.app',
-  'https://client-mu-five-98.vercel.app',
-  /\.vercel\.app$/,   // any *.vercel.app subdomain
-];
+  process.env.CLIENT_URL,           // custom domain via env var
+  /\.vercel\.app$/,                  // any *.vercel.app subdomain
+].filter(Boolean);
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true); // allow server-to-server / curl

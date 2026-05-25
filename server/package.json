@@ -1,16 +1,25 @@
 {
-  "name": "server",
+  "name": "cuet-bookworld-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "REST API server for CUET Bookworld — a role-based library management system with Firebase Auth, MongoDB, and video consultation support.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "seed": "node seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["library", "management", "express", "mongodb", "firebase", "rest-api"],
+  "author": "Asif Hasan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asifhasan973/CUET-book-world.git",
+    "directory": "server"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.6",

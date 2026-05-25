@@ -4,7 +4,7 @@ const User = require('../models/User');
 // Initialize Firebase Admin if not already initialized
 if (admin.apps.length === 0) {
   admin.initializeApp({
-    projectId: process.env.FIREBASE_PROJECT_ID || 'cuet-book-world'
+    projectId: process.env.FIREBASE_PROJECT_ID,
   });
 }
 

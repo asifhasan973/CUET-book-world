@@ -1,55 +1,61 @@
-# Library Management System (CUET Bookworld)
+# CUET Bookworld — Digital Library Management System
 
-A role-based digital library management system designed exclusively for Chittagong University of Engineering & Technology (CUET). It offers a professional, student-centric interface for borrowing books, renewing them with video call verification, reading e-books, and managing records.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?logo=firebase&logoColor=black)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
----
+A role-based digital library management system designed for Chittagong University of Engineering & Technology (CUET). It provides a professional, student-centric interface for borrowing books, renewing them with video call verification, reading e-books, and managing library records across three distinct user roles.
 
-## 🔗 Live Site
-* **Live Link:** [https://cuet-book-world-delta.vercel.app/](https://cuet-book-world-delta.vercel.app/)
-
----
-
-## 🔐 Demo Accounts
-
-The following demo accounts are pre-configured for testing all three roles:
-
-| Role | Email | Password | Name |
-|------|-------|----------|------|
-| 🎓 **Student** | `student@cuet.ac.bd` | `Student@123` | Rafiq Ahmed (CSE, 3rd Year) |
-| 📚 **Librarian** | `librarian@cuet.ac.bd` | `Librarian@123` | Dr. Nazrul Islam (Faculty) |
-| ⚙️ **Admin** | `admin@cuet.ac.bd` | `Admin@123` | Prof. Kamal Hossain (Faculty) |
-
-> **Note:** These accounts must be created in the Firebase Console under Authentication → Email/Password. The MongoDB user profiles are seeded automatically via `node seed.js` in the server.
+**🔗 Live Site:** [cuet-book-world-delta.vercel.app](https://cuet-book-world-delta.vercel.app/)
 
 ---
 
 ## ✨ Features
 
-- **Role-based Authentication:** 3 roles (Student, Librarian, Admin) with secure routing.
-- **Book Catalog:** Browse physical and electronic books with search, multi-field filters, and sorting.
-- **Borrow & Return System:** Borrow books with auto-limit enforcement (3 books for 1st-3rd year, 4 for 4th year).
-- **Video consultation renewal system:** Auto-generate Jitsi Meet video consultation links upon approval to verify student ID visually before renewing books.
-- **E-Book Reader:** Read PDF e-books online with an embedded PDF viewer.
-- **Admin Panel:** Complete system-wide analytics, user management (activate/suspend/change roles), and announcement management (promoted site-wide banners).
-- **Librarian Panel:** Manage books catalog (CRUD), review and approve borrow/renewal requests, and manage student borrowing records/fines.
-- **Notifications & In-App Alerts:** Real-time feedback for borrow actions, renewal meeting links, and overdue reminders.
-- **Interactive UI:** Smooth dark/light mode toggle, floating micro-animations, statistics counter animations, and page transitions.
-- **Mobile Responsive:** Fully responsive mobile layout with collapsing navbar drawer.
+- **Role-based Authentication:** 3 roles (Student, Librarian, Admin) with protected routing and Firebase ID token validation.
+- **Book Catalog:** Browse physical and electronic books with search, multi-field filters, sorting, and pagination.
+- **Borrow & Return System:** Borrow books with auto-limit enforcement (3 books for 1st–3rd year, 4 for 4th year).
+- **Video Consultation Renewal:** Auto-generated Jitsi Meet video links upon approval for student ID verification before renewing books.
+- **E-Book Reader:** Read PDF e-books online with an embedded viewer.
+- **Admin Panel:** System-wide analytics, user management (activate/suspend/change roles), and site-wide announcement banners.
+- **Librarian Panel:** CRUD operations on book catalog, borrow/renewal request management, and student fine tracking.
+- **Notifications:** In-app alerts for borrow actions, renewal meeting links, overdue reminders, and fine updates.
+- **Interactive UI:** Dark/light mode, glassmorphism effects, floating micro-animations, and smooth page transitions.
+- **Mobile Responsive:** Fully responsive layout with a collapsing navbar drawer.
+
+---
+
+## 🏗 Key Technical Highlights
+
+| Area | Implementation |
+|------|---------------|
+| **Authentication** | Firebase ID tokens validated server-side via `firebase-admin` SDK — no client-trust model |
+| **Authorization** | `requireRole()` middleware enforces role-based access (student/librarian/admin) per route |
+| **Security** | Regex injection prevention via `escapeRegex()`, input allowlists on all write endpoints, CUET email domain enforcement |
+| **Error Handling** | Custom error class hierarchy (`BadRequestError`, `NotFoundError`, etc.) with centralized middleware — dev mode shows stack traces, production masks internals |
+| **Architecture** | MVC pattern: Models → Controllers → Routes, with shared utilities and middleware layers |
+| **Fine System** | Automatic overdue fine calculation with librarian override capability and audit trail |
+| **Video Integration** | Jitsi Meet room IDs generated via `crypto.randomBytes()` — no API key required |
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Frontend:** React.js (v19), React Router DOM (v7), Vite, Tailwind CSS (v4)
-- **Backend:** Node.js, Express.js (v5)
-- **Database:** MongoDB Atlas (via Mongoose)
-- **Authentication & Storage:** Firebase Auth & Firebase Storage
-- **Video Call Consultation:** Jitsi Meet API Integration
-- **Formatting & HTTP:** Axios, date-fns
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | React 19, React Router DOM 7, Vite 8, Tailwind CSS 4 |
+| **Backend** | Node.js, Express 5 |
+| **Database** | MongoDB Atlas (Mongoose ODM) |
+| **Auth & Storage** | Firebase Auth, Firebase Storage |
+| **Video Calls** | Jitsi Meet API |
+| **Utilities** | Axios, date-fns, Lucide React |
 
 ---
 
-## 📸 Screenshots & UI Tour
+## 📸 Screenshots
 
 ### 🏠 Home & Catalog
 | Landing Page (Light Mode) | Landing Page (Dark Mode) |
@@ -84,6 +90,20 @@ The following demo accounts are pre-configured for testing all three roles:
 
 ---
 
+## 🔐 Demo Accounts
+
+The following demo accounts are available for testing:
+
+| Role | Email | Password |
+|------|-------|----------|
+| 🎓 **Student** | `student@cuet.ac.bd` | `Student@123` |
+| 📚 **Librarian** | `librarian@cuet.ac.bd` | `Librarian@123` |
+| ⚙️ **Admin** | `admin@cuet.ac.bd` | `Admin@123` |
+
+> **Note:** Demo accounts must be created in the Firebase Console under Authentication → Email/Password. MongoDB user profiles are seeded via `npm run seed` in the server.
+
+---
+
 ## ⚙️ Run Locally
 
 ### 1. Clone the repo
@@ -93,48 +113,44 @@ cd CUET-book-world
 ```
 
 ### 2. Configure Environment Variables
-Copy `.env.example` files to `.env` in both folders and fill in your Firebase and MongoDB credentials:
 
-* **For Client:**
+* **Client:**
   ```bash
   cd client
   cp .env.example .env.local
   ```
-  *(Then open `.env.local` and add your VITE_FIREBASE_* credentials)*
+  Fill in your `VITE_FIREBASE_*` credentials in `.env.local`.
 
-* **For Server:**
+* **Server:**
   ```bash
   cd ../server
   cp .env.example .env
   ```
-  *(Then open `.env` and add your `MONGODB_URI` and `FIREBASE_PROJECT_ID` connection/credentials)*
+  Fill in your `MONGODB_URI` and `FIREBASE_PROJECT_ID` in `.env`.
 
 ### 3. Install Dependencies & Seed Database
-* **Server Setup:**
-  ```bash
-  cd server
-  npm install
-  node seed.js  # Seeding demo data
-  ```
+```bash
+# Server
+cd server
+npm install
+npm run seed    # Seeds demo books, users, and announcements
 
-* **Client Setup:**
-  ```bash
-  cd ../client
-  npm install
-  ```
+# Client
+cd ../client
+npm install
+```
 
 ### 4. Run Development Servers
-* **Start Server (Backend):**
-  ```bash
-  cd server
-  npm run dev
-  ```
-* **Start Client (Frontend):**
-  ```bash
-  cd client
-  npm run dev
-  ```
-  *The app will be available at [http://localhost:5173/](http://localhost:5173/)*
+```bash
+# Terminal 1 — Backend
+cd server
+npm run dev
+
+# Terminal 2 — Frontend
+cd client
+npm run dev
+```
+The app will be available at [http://localhost:5173/](http://localhost:5173/)
 
 ---
 
@@ -142,31 +158,35 @@ Copy `.env.example` files to `.env` in both folders and fill in your Firebase an
 
 ```
 CUET-book-world/
-├── client/                 # React frontend
+├── client/                 # React frontend (Vite + Tailwind CSS)
 │   ├── src/
-│   │   ├── api/            # Axios API config
-│   │   ├── assets/         # Images, icons
-│   │   ├── components/     # Reusable UI pieces
-│   │   ├── context/        # React context files (Auth, Theme)
-│   │   ├── hooks/          # Custom hooks
-│   │   ├── pages/          # Route-level page components
-│   │   │   ├── admin/      # Admin dashboard pages
-│   │   │   └── librarian/  # Librarian pages
-│   │   ├── utils/          # Helper functions
-│   │   ├── firebase.js     # Firebase connection setup
-│   │   └── App.jsx         # Routes registration
-│   └── .env.example        # Client env variables template
-└── server/                 # Express backend
-    ├── config/             # DB configuration folder
-    ├── controllers/        # Route controllers (MVC Pattern)
-    ├── middleware/         # Custom authentication middleware
-    ├── models/             # Mongoose Schemas (User, Book, BorrowRecord, etc.)
-    ├── routes/             # API routes
-    ├── utils/              # Helper modules
-    ├── seed.js             # DB Seeder script
-    └── .env.example        # Server env variables template
+│   │   ├── api/            # Axios instance with Firebase token interceptor
+│   │   ├── components/     # Reusable UI (Navbar, Modal, Toast, Sidebar, etc.)
+│   │   ├── context/        # React Context (Auth, Theme)
+│   │   ├── hooks/          # Custom hooks (useAnimatedCounter, useParallax, etc.)
+│   │   ├── pages/          # Route-level pages
+│   │   │   ├── admin/      # Admin dashboard & user management
+│   │   │   └── librarian/  # Librarian dashboard, book & student management
+│   │   ├── utils/          # Shared helpers (email domain validation)
+│   │   └── App.jsx         # Route definitions & layout
+│   └── .env.example        # Client environment template
+└── server/                 # Express REST API
+    ├── config/             # MongoDB connection
+    ├── controllers/        # Business logic (MVC controllers)
+    ├── middleware/          # Auth (Firebase token) & error handling
+    ├── models/             # Mongoose schemas (User, Book, BorrowRecord, etc.)
+    ├── routes/             # Express route definitions
+    ├── utils/              # Error classes, regex escaping, fine calculation
+    ├── seed.js             # Database seeder with demo data
+    └── .env.example        # Server environment template
 ```
 
 ---
 
-*Built with ❤️ for Chittagong University of Engineering & Technology (CUET) Students*
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+*Built with ❤️ for Chittagong University of Engineering & Technology (CUET)*
