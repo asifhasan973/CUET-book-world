@@ -4,9 +4,8 @@ A role-based digital library management system designed exclusively for Chittago
 
 ---
 
-## 🔗 Live Sites
-* **Frontend client:** [https://client-asifhasan973s-projects.vercel.app](https://client-asifhasan973s-projects.vercel.app) (Alternative: [https://client-mu-five-98.vercel.app](https://client-mu-five-98.vercel.app))
-* **Backend API server:** [https://cuet-book-world-server.vercel.app/api](https://cuet-book-world-server.vercel.app/api)
+## 🔗 Live Site
+* **Live Link:** [https://cuet-book-world-delta.vercel.app/](https://cuet-book-world-delta.vercel.app/)
 
 ---
 
@@ -60,6 +59,10 @@ The following demo accounts are pre-configured for testing all three roles:
 | Book Catalog & Filters | Book Details & Reviews |
 |:---:|:---:|
 | ![Booklist](Preview%20Images/Booklist.png) | ![Book Details](Preview%20Images/Book-details.png) |
+
+| Login Page | Sign Up Page |
+|:---:|:---:|
+| ![Login Page](Preview%20Images/login%20page.png) | ![Sign Up Page](Preview%20Images/sign%20up%20page.png) |
 
 ### 📖 Reading & Renewal Process
 | PDF E-Book Viewer | Book Renewal Request |
